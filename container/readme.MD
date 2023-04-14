@@ -15,7 +15,7 @@ docker build --pull --rm -f "container\dockerfile" -t unlocode:lts-alpine-3.14 "
 
 ### Pull from [DockerHub](https://hub.docker.com/r/klaspihl/unlocode)
 ```docker
-docker run --rm --env name=yngsjö --env country=se  klaspihl/unlocode:lts-alpine-3.14 
+docker run --rm --env name=yngsjö --env country=se  klaspihl/unlocode 
 ```
 
 ### Run with variables
