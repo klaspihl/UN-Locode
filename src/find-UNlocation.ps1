@@ -60,18 +60,10 @@
     Example;
     [
         {
-            "Change": "",
             "Country": "SE",
             "Location": "HBG",
             "Name": "Helsingborg",
-            "NameWoDiacritics": "Helsingborg",
-            "Subdivision": "",
-            "Status": "",
-            "Function": "",
-            "Date": "",
-            "IATA": "",
             "Coordinates": "",
-            "Remarks": ""
         }
     ]
 
@@ -80,18 +72,18 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param (
-    [Parameter(ParameterSetName = 'Name')]
+    #[Parameter(ParameterSetName = 'Name')]
     $Name,
-    [Parameter(ParameterSetName = 'Location')]
+    #[Parameter(ParameterSetName = 'Location')]
     $Location,
-    [Parameter(ParameterSetName = 'Name')]
-    [Parameter(ParameterSetName = 'Location')]
+    #[Parameter(ParameterSetName = 'Name')]
+    #[Parameter(ParameterSetName = 'Location')]
     $Country,
     [parameter(DontShow)]
     $uriData = 'https://raw.githubusercontent.com/datasets/un-locode/main/',
     [parameter(DontShow)]
     $DataEndpoint = 'datapackage.json',
-    $CSVDataPath = 'un-locode.csv',
+    $CSVDataPath = 'code-list.csv',
     $CSVCountryPath = 'country-codes.csv',
     [switch]$ForceDownload,
     [string]$Exceptions
@@ -134,18 +126,32 @@ param (
         }
         if($latlong) {
             $lat,$long = $latlong.split(' ')
-            return ("{0},{1}" -f (convert-longlat $lat),(convert-longlat $long))
+            return ("{0},{1}" -f (convert-longlat $lat).trim(),(convert-longlat $long).trim())
         }
 
         
     }
     #endregion functions
+    'VerbosePreference','Name','Location','Country','Exceptions' | ForEach-Object {
+        if(-not $PSBoundParameters.ContainsKey($PSItem)) {
+            Write-Verbose "$PSItem argument not found, use environment variable"
+            $EnvVar = Get-ChildItem env: | Where-Object Name -eq $PSItem | Select-Object -ExpandProperty value
+            if($EnvVar) {
+                Set-Variable -Name $PSItem -Value $EnvVar
+            } else {
+                Write-Verbose "Environment '$PSItem' variable not found"
+            }
+        }
+    }
+
 
 #region get UN/LOCODE data
     while([string]::IsNullOrEmpty($unlocode)) {
         if(Test-Path $CSVDataPath) {
-            if((get-item $CSVDataPath).CreationTime -gt (get-date).AddMonths(-6) ) {
-                $unlocode = Import-Csv -Path $csvdatapath 
+            if($IsLinux -and -not $ForceDownload) {
+                $unlocode = Import-Csv -Path $CSVDataPath
+            } elseif((get-item $CSVDataPath).CreationTime -gt (get-date).AddMonths(-6) ) {
+                $unlocode = Import-Csv -Path $CSVDataPath 
             } else {
                 $ForceDownload = $true
             }
@@ -162,11 +168,12 @@ param (
         } 
     }
     #endregion get UN/LOCODE data
-
 #region get country data
     while([string]::IsNullOrEmpty($countrycode)) {
         if(Test-Path $CSVCountryPath) {
-            if((get-item $CSVCountryPath).CreationTime -gt (get-date).AddMonths(-6) ) {
+            if($IsLinux -and -not $ForceDownload) {
+                $countrycode = Import-Csv -Path $CSVCountryPath
+            } elseif((get-item $CSVCountryPath).CreationTime -gt (get-date).AddMonths(-6) ) {
                 $countrycode = Import-Csv -Path $CSVCountryPath 
             } else {
                 $ForceDownload = $true
@@ -186,87 +193,93 @@ param (
     #endregion get country data
 
 #region add exceptions from file
-    if($PSBoundParameters.ContainsKey("Exceptions")) {
+    if($Exceptions) {
         Write-Verbose "Exceptions requested"
         if(Test-Path $Exceptions) {
-            $ExceptionProperties = "Change, Coordinates, Country, Date, Function, IATA, Location, Name, NameWoDiacritics, Remarks, Status, Subdivision"
+            $ExceptionProperties = @("Country", "Location", "Name")
             $ExceptionsRawData = Get-Content -Path $Exceptions
             $ExceptionsData = switch ($Exceptions) {
                 {$PSitem -like "*.json"} { $ExceptionsRawData | ConvertFrom-Json }
                 {$PSitem -like "*.csv"} { $ExceptionsRawData | ConvertFrom-CSV }
                 Default {throw "Can not read format, need to be extention json or csv"}
             }
-            if(($ExceptionsData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name | Sort-Object) -join ', ' -ne $ExceptionProperties) {
+            if((Compare-Object $ExceptionProperties ($ExceptionsData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name) ).sideindicator -contains '<=') {
                 throw "Exceptions loaded from $Exceptions do not contain required properties; $ExceptionProperties"
             }
         } else {
             throw "Can not find requested exceptions file at: $Exceptions"
         }
         Write-Verbose "Exceptions added to UN/LOCODE data"
-        $unlocode += $ExceptionsData
+        $unlocode += ($ExceptionsData | Select-Object ( $unlocode | Get-Member -MemberType NoteProperty).name)
     }
     #endregion add exceptions from file
+    Write-Verbose "From data tables: Unicode locations: $($unlocode.count), Countrys $($countrycode.count)"
 
 #region get and convert data
-    if($PSBoundParameters.ContainsKey('Name')) {
+    if($Name) {
         Write-Verbose "Find location on location name"
-        $Location = $unlocode | Where-Object Name -eq $Name 
-        if($PSBoundParameters.ContainsKey('Country') -and $Location) {
+        $LocationResult = $unlocode | Where-Object Name -eq $Name 
+        if($Country -and $LocationResult) {
             if($country.length -gt 2) {
                 Write-Verbose "Country full name entered, search country code"
                 $Country = $countrycode | Where-Object CountryName -eq $Country | Select-Object -ExpandProperty CountryCode
                 
             }
-            $Location = $Location | Where-Object Country -eq $Country
+            $LocationResult = $LocationResult | Where-Object Country -eq $Country
         }
     }
-    if($PSBoundParameters.ContainsKey('Location')) {
+    if($Location) {
         Write-Verbose "Find location on location short name"
-        $Location = $unlocode | Where-Object Location -eq $Location
-        if($PSBoundParameters.ContainsKey('Country') -and $Location) {
+        $LocationResult = $unlocode | Where-Object Location -eq $Location
+        if($Country -and $LocationResult) {
             if($country.length -gt 2) {
                 Write-Verbose "Country full name entered, search country code"
                 $Country = $countrycode | Where-Object CountryName -eq $Country | Select-Object -ExpandProperty CountryCode
                 
             }
-            $Location = $Location | Where-Object Country -eq $Country
+            $LocationResult = $LocationResult | Where-Object Country -eq $Country
         }
     }
     #endregion get and convert data
 
 #region output
     if(
-        $Location.Count -eq 2 -and
+        $LocationResult.Count -eq 2 -and
         $Exceptions -and
-        $Location[0].Country  -eq $Location[1].Country  -and
+        $LocationResult[0].Country  -eq $LocationResult[1].Country  -and
         (
-            $Location[0].Name -eq $Location[1].Name -or
-            $Location[0].Location -eq $Location[1].Location 
+            $LocationResult[0].Name -eq $LocationResult[1].Name -or
+            $LocationResult[0].Location -eq $LocationResult[1].Location 
         )
         ) {
         Write-Verbose "Added exception gives multiple locations, return location in exception"
-        $Location = $Location | Select-Object -last 1
+        $LocationResult = $LocationResult | Select-Object -last 1
     }
 
-    if($Location.Count -gt 1) {
-        throw "Multiple sites found, narrow search by Country. Sites found in countries; $($Location.Country -join ', ')"
-    } elseif ([string]::IsNullOrEmpty($Location)) {
-        write-warning "No location found on; $Country $Name$Location"
+    if($LocationResult.Count -gt 1) {
+        throw "Multiple sites found, narrow search by Country. Sites found in countries; $($LocationResult.Country -join ', ')"
+    } elseif ([string]::IsNullOrEmpty($LocationResult)) {
+        write-warning "No location found on; $Country $Name $Location"
         $Output = $null
     } else {
-        if($Location.Coordinates) {
-            $Coordinates = convert-coordinates $Location.Coordinates
+        if($LocationResult.Coordinates) {
+            $Coordinates = convert-coordinates $LocationResult.Coordinates
         } else {
             $Coordinates = $null
         }
-        $CountryName = $countrycode | Where-Object CountryCode -eq $Location.Country | Select-Object -ExpandProperty CountryName
+        $CountryName = $countrycode | Where-Object CountryCode -eq $LocationResult.Country | Select-Object -ExpandProperty CountryName
         $Output = [PSCustomObject]@{
-            Location = $Location.Location
-            LocatioName = $Location.Name
-            Country = $Location.Country
+            Location = $LocationResult.Location
+            LocatioName = $LocationResult.Name
+            Country = $LocationResult.Country
             CountryName = $CountryName
             Coordinates = $Coordinates
         }
     }
-    return $Output
+    if($IsLinux) {
+        return ($Output | ConvertTo-Json)
+    } else {
+        return $Output
+    }
+    
     #endregion output
