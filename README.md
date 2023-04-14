@@ -2,9 +2,11 @@
 United Nations Code for Trade and Transport Location
 
 ## Project 
-1. Use external source of LOCODE
+1. Use external source of LOCODE 
 2. Code to translate country and name/city and reverse. 
 3. Build container
+4. Azure App
+5. Azure Function
 
 ### 1 Source
 [Codes for Trade](https://unece.org/trade/cefact/UNLOCODE-Download)
@@ -12,6 +14,7 @@ United Nations Code for Trade and Transport Location
 ### 2 Code
 
 #### Powershell
+[Code in src](/src/find-UNlocation.ps1)
 ```powershell
 .\find-UNlocation.ps1 -name Helsingborg  -Exceptions ..\res\exceptions.json -Verbose
 VERBOSE: Exceptions requested
@@ -36,4 +39,18 @@ Country     : SE
 CountryName : Sweden
 Coordinates : +55.42 ,+13.82
 ```
+
+### Container
+[Dockerfile](/container/dockerfile)
+```docker
+docker run --rm --env name=yngsjö --env country=se  unlocode:lts-alpine-3.14
+{
+  "Location": "YNG",
+  "LocatioName": "Yngsjö",
+  "Country": "SE",
+  "CountryName": "Sweden",
+  "Coordinates": "+55.88,+14.22"
+}
+```
+
 ## Additional Resources
