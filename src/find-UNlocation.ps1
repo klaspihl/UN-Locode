@@ -165,6 +165,7 @@ param (
             $PackageAge = get-date($Databackageobject.version.Substring(0,6))
             $csvpath = $Databackageobject.resources | Where-Object Name -eq 'code-list' | Select-Object -ExpandProperty 'path'
             Invoke-WebRequest ($uriData+$csvpath) | Select-Object -ExpandProperty 'content' | Out-File $csvdatapath -Force
+            $unlocode = Import-Csv -Path $CSVDataPath
         } 
     }
     #endregion get UN/LOCODE data
@@ -188,6 +189,7 @@ param (
             $PackageAge = get-date($Databackageobject.version.Substring(0,6))
             $csvpath = $Databackageobject.resources | Where-Object Name -eq 'country-codes' | Select-Object -ExpandProperty 'path'
             Invoke-WebRequest ($uriData+$csvpath) | Select-Object -ExpandProperty 'content' | Out-File $CSVCountryPath -Force
+            $countrycode = Import-Csv -Path $CSVCountryPath
         }
     }
     #endregion get country data
