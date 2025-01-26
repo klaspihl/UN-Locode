@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:lts-alpine-3.14
+FROM mcr.microsoft.com/powershell:alpine-3.20
 LABEL maintainer   "Klas.Pihl@gmail.com"
 LABEL description  "Find UN location code for a given country and location name\
                      To download the required source location and country files run the following command: .\find-UNlocation.ps1 -ForceDownload"
@@ -14,6 +14,6 @@ ADD https://raw.githubusercontent.com/datasets/un-locode/main/data/code-list.csv
 WORKDIR ${scrdirectory}
 
 #copy explicit files to directory
-COPY find-UNlocation.ps1 ${scrdirectory}
+COPY ./src/find-UNlocation.ps1 ${scrdirectory}
 
 ENTRYPOINT pwsh /${scrdirectory}/find-UNlocation.ps1
