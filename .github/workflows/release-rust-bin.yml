@@ -40,7 +40,7 @@ jobs:
 
       - name: Build binary with Docker
         run: |
-          docker build -t rust-unlocode:release ./rust-bin
+          docker build -f ./rust-bin/Dockerfile -t rust-unlocode:release .
           docker create --name temp-export rust-unlocode:release
           docker cp temp-export:/app/find-unlocation ./find-unlocation
           docker rm temp-export
