@@ -6,16 +6,20 @@ United Nations Code for Trade and Transport Location
 1. Use external source of LOCODE 
 2. Code to translate country and name/city and reverse. 
 3. Build container 
-4. Azure App
-5. Azure Function
+
 
 ### 1 Source
 [Codes for Trade](https://unece.org/trade/cefact/UNLOCODE-Download)
 
 ### 2 Code
 
-#### Powershell
-[Code in src](/src/find-UNlocation.ps1)
+#### Rust 2026-05-03
+Changed to RUST since Microsoft do not maintain [Powershell in MCR](mcr.microsoft.com/powershell)
+
+The result is 20% faster runtime with a 1/18th of the container size.
+
+#### Powershell Archived
+[Code in src](/archive/src/find-UNlocation.ps1)
 ```powershell
 .\find-UNlocation.ps1 -name Helsingborg  -Exceptions ..\res\exceptions.json -Verbose
 VERBOSE: Exceptions requested
@@ -43,14 +47,24 @@ Coordinates : +55.42 ,+13.82
 
 ### Container
 
-[Dockerhub](https://hub.docker.com/repository/docker/klaspihl/unlocode/general)
+#### Tags
+
+|Tag|Note|
+|---|---|
+|Latest|Same as latest version|
+|Version number|Source data loaded at runtime from compressed files|
+|Version-bin|Source data is within binary, ~5 MB larger image with 2% faster query time|
+
+
+
+[Dockerhub](https://hub.docker.com/r/klaspihl/unlocode)
 ```docker
 docker run --rm --env location=yng --env country=se  klaspihl/unlocode
 ```
 
 [Dockerfile](/container/dockerfile)
 ```docker
-docker run --rm --env name=yngsjö --env country=se  unlocode:lts-alpine-3.14
+docker run --rm --env name=yngsjö --env country=se  klaspihl/unlocode
 {
   "Location": "YNG",
   "LocatioName": "Yngsjö",
@@ -59,5 +73,3 @@ docker run --rm --env name=yngsjö --env country=se  unlocode:lts-alpine-3.14
   "Coordinates": "+55.88,+14.22"
 }
 ```
-
-## Additional Resources
