@@ -64,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: ${{ env.PLATFORMS }}
-          file: dockerfile
+          file: rust-gz/Dockerfile
           push: true
           tags: |
             ${{ env.REPOSITORY }}:${{ env.version }}
