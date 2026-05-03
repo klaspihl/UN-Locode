@@ -44,6 +44,8 @@ jobs:
           docker create --name temp-export rust-unlocode:release
           docker cp temp-export:/app/find-unlocation ./find-unlocation
           docker rm temp-export
+      - name: Set executable permission on binary
+        run: chmod +x ./find-unlocation
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
