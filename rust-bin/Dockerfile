@@ -1,6 +1,6 @@
 FROM rust:alpine AS builder
 WORKDIR /app
-COPY . .
+COPY ./rust-bin/ .
 RUN apk add --no-cache musl-dev curl \
     && mkdir -p ./data \
     && curl -L -o ./data/country-codes.csv https://raw.githubusercontent.com/datasets/un-locode/main/data/country-codes.csv \
