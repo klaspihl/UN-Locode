@@ -1,6 +1,6 @@
 FROM rust:alpine AS builder
 WORKDIR /app
-COPY ./ .
+COPY . .
 RUN apk add --no-cache musl-dev gzip curl \
     && cargo build --release
 
