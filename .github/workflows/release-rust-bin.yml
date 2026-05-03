@@ -1,6 +1,12 @@
 name: Release Rust Binary
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: false
+        type: string
+        description: "Version"
   push:
     tags:
       - 'rust-bin-v*'
@@ -12,11 +18,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract version from Cargo.toml
-        id: get_version
+      - name: Determine version
+        id: determine_version
         run: |
-          VERSION=$(grep '^version =' rust-bin/Cargo.toml | head -1 | cut -d '"' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [ -z "${{ github.event.inputs.version }}" ]; then
+            year=$(date +'%y')
+            month=$(date +'%m' | sed 's/^0*//')
+            number=$(git tag --list "${year}.${month}.*" | wc -l)
+            number=$((number + 1))
+            version="${year}.${month}.${number}"
+          else
+            version="${{ github.event.inputs.version }}"
+          fi
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      #- name: Extract version from Cargo.toml
+      #  id: get_version
+      #  run: |
+      #    VERSION=$(grep '^version =' rust-bin/Cargo.toml | head -1 | cut -d '"' -f2)
+      #    echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build binary with Docker
         run: |
@@ -28,8 +48,8 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rust-bin-v${{ steps.get_version.outputs.version }}
-          name: find-unlocation ${{ steps.get_version.outputs.version }}
+          tag_name: rust-bin-v${{ steps.determine_version.outputs.version }}
+          name: find-unlocation ${{ steps.determine_version.outputs.version }}
           files: ./find-unlocation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
