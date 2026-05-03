@@ -6,6 +6,7 @@ United Nations Code for Trade and Transport Location
 1. Use external source of LOCODE 
 2. Code to translate country and name/city and reverse. 
 3. Build container 
+4. Build binary avalable in [releases](https://github.com/klaspihl/UN-Locode/releases)
 
 
 ### 1 Source
