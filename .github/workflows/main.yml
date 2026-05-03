@@ -70,3 +70,26 @@ jobs:
             ${{ env.REPOSITORY }}:${{ env.version }}
             ${{ env.REPOSITORY }}:latest
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image (rust-bin)
+        id: push_bin
+        uses: docker/build-push-action@v6
+        with:
+          platforms: ${{ env.PLATFORMS }}
+          file: rust-bin/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REPOSITORY }}:${{ env.version }}-bin
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image (rust-gz)
+        id: push_gz
+        uses: docker/build-push-action@v6
+        with:
+          platforms: ${{ env.PLATFORMS }}
+          file: rust-gz/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REPOSITORY }}:${{ env.version }}
+            ${{ env.REPOSITORY }}:latest
+          labels: ${{ steps.meta.outputs.labels }}
