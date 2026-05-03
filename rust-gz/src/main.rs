@@ -142,9 +142,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             String::new()
         };
+        let osm_link = if !coords_str.is_empty() {
+            let mut parts = coords_str.split(',');
+            if let (Some(lat), Some(lon)) = (parts.next(), parts.next()) {
+                format!("https://www.openstreetmap.org/?mlat={}&mlon={}#map=11/{}/{}", lat, lon, lat, lon)
+            } else {
+                String::new()
+            }
+        } else {
+            // Fallback: search by location name and country name
+            let mut query = String::new();
+            if !location_name.is_empty() {
+                query.push_str(&location_name.replace(' ', "+"));
+            }
+            if !country_name.is_empty() {
+                if !query.is_empty() { query.push('+'); }
+                query.push_str(&country_name.replace(' ', "+"));
+            }
+            if !query.is_empty() {
+                format!("https://www.openstreetmap.org/search?query={}", query)
+            } else {
+                String::new()
+            }
+        };
         println!(
-            "{{\n  \"Location\": \"{}\",\n  \"LocatioName\": \"{}\",\n  \"Country\": \"{}\",\n  \"CountryName\": \"{}\",\n  \"Coordinates\": \"{}\"\n}}",
-            location_code, location_name, country_code, country_name, coords_str
+            "{{\n  \"Location\": \"{}\",\n  \"LocatioName\": \"{}\",\n  \"Country\": \"{}\",\n  \"CountryName\": \"{}\",\n  \"Coordinates\": \"{}\",\n  \"OpenStreetMap\": \"{}\"\n}}",
+            location_code, location_name, country_code, country_name, coords_str, osm_link
         );
     }
     Ok(())
