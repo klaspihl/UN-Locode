@@ -18,6 +18,22 @@ Changed to RUST since Microsoft do not maintain [Powershell in MCR](mcr.microsof
 
 The result is 20% faster runtime with a 1/18th of the container size.
 
+##### Command
+```bash
+docker run --rm  klaspihl/unlocode:latest --city yngsjö --country se
+```
+##### Result
+```json
+{
+  "Location": "YNG",
+  "LocatioName": "Yngsjö",
+  "Country": "SE",
+  "CountryName": "Sweden",
+  "Coordinates": "55.88333,14.21667",
+  "OpenStreetMap": "https://www.openstreetmap.org/?mlat=55.88333&mlon=14.21667#map=11/55.88333/14.21667"
+}
+```
+
 #### Powershell Archived
 [Code in src](/archive/src/find-UNlocation.ps1)
 ```powershell
