@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = parse_args();
 
     if args.name.is_none() && args.location.is_none() && args.country.is_none() {
-        println!("Usage: set environment variables or arguments:\n  --name <location name>\n  --location <UN/LOCODE short name>\n  --country <country code or name>\n\nExample (environment):\n  docker run --rm --env location=yng --env country=se find-unlocation-gz2\n\nExample (arguments):\n  docker run --rm find-unlocation-gz2 --location yng --country se");
+        println!("Usage: set environment variables or arguments:\n  --name <location name>\n  --location <UN/LOCODE short name>\n  --country <country code or name>\n\nExample (docker arguments):\n  docker run --rm klaspihl/find-unlocation --location yng --country se");
         return Ok(());
     }
 
